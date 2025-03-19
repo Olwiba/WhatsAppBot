@@ -8,6 +8,7 @@ const BOT_CONFIG = {
   COMMAND_PREFIX: "!bot",
   START_COMMAND: "!bot start",
   STATUS_COMMAND: "!bot status",
+  HELP_COMMAND: "!bot help",
   TARGET_GROUP_ID: "", // This will be populated when the bot joins a group
 };
 
@@ -282,6 +283,18 @@ client.on("message", async (message: Message) => {
           }`;
 
         await chat.sendMessage(status);
+      } else if (content === BOT_CONFIG.HELP_COMMAND) {
+        // Display available commands
+        const helpText =
+          `*Available Commands*\n\n` +
+          `📝 *${BOT_CONFIG.START_COMMAND}*\n` +
+          `Starts the scheduled messaging service.\n\n` +
+          `📊 *${BOT_CONFIG.STATUS_COMMAND}*\n` +
+          `Shows the current bot status and upcoming scheduled messages.\n\n` +
+          `🛟 *${BOT_CONFIG.HELP_COMMAND}*\n` +
+          `Displays this help message.`;
+
+        await chat.sendMessage(helpText);
       }
     }
   } catch (error) {
