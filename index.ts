@@ -9,6 +9,10 @@ const BOT_CONFIG = {
   START_COMMAND: "!bot start",
   STATUS_COMMAND: "!bot status",
   HELP_COMMAND: "!bot help",
+  MONDAY_COMMAND: "!bot monday",
+  FRIDAY_COMMAND: "!bot friday",
+  DEMO_COMMAND: "!bot demo",
+  MONTHLY_COMMAND: "!bot monthly",
   TARGET_GROUP_ID: "", // This will be populated when the bot joins a group
 };
 
@@ -293,9 +297,53 @@ client.on("message", async (message: Message) => {
           `📊 *${BOT_CONFIG.STATUS_COMMAND}*\n` +
           `Shows the current bot status and upcoming scheduled messages.\n\n` +
           `🛟 *${BOT_CONFIG.HELP_COMMAND}*\n` +
-          `Displays this help message.`;
+          `Displays this help message.\n\n` +
+          `📅 *${BOT_CONFIG.MONDAY_COMMAND}*\n` +
+          `Triggers the Monday message manually.\n\n` +
+          `📅 *${BOT_CONFIG.FRIDAY_COMMAND}*\n` +
+          `Triggers the Friday message manually.\n\n` +
+          `📅 *${BOT_CONFIG.DEMO_COMMAND}*\n` +
+          `Triggers the biweekly demo day message manually.\n\n` +
+          `📅 *${BOT_CONFIG.MONTHLY_COMMAND}*\n` +
+          `Triggers the monthly celebration message manually.`;
 
         await chat.sendMessage(helpText);
+      } else if (content === BOT_CONFIG.MONDAY_COMMAND) {
+        // Manually trigger Monday message
+        console.log(
+          `Manually triggering Monday message at ${formatDate(new Date())}`
+        );
+        await chat.sendMessage(
+          "*Kick off your week with purpose*\n\n👉 What are your main goals this week?\n\nShare below and let's crush this week together! 💪"
+        );
+      } else if (content === BOT_CONFIG.FRIDAY_COMMAND) {
+        // Manually trigger Friday message
+        console.log(
+          `Manually triggering Friday message at ${formatDate(new Date())}`
+        );
+        await chat.sendMessage(
+          "*Wrap up your week with reflection*\n\n👉 How did you do on your goals this week?\n\nShare your insights and let's celebrate our growth! 🎉"
+        );
+      } else if (content === BOT_CONFIG.DEMO_COMMAND) {
+        // Manually trigger biweekly demo day message
+        console.log(
+          `Manually triggering biweekly demo day message at ${formatDate(
+            new Date()
+          )}`
+        );
+        await chat.sendMessage(
+          "*Demo day*\n\n👉 Share what you've been cooking up!\n\nThere is no specific format. Could be a short vid, link, screenshot or picture. 🏆"
+        );
+      } else if (content === BOT_CONFIG.MONTHLY_COMMAND) {
+        // Manually trigger monthly celebration message
+        console.log(
+          `Manually triggering monthly celebration message at ${formatDate(
+            new Date()
+          )}`
+        );
+        await chat.sendMessage(
+          "*Monthly Celebration* 🎊\n\nAs we close out the month, take a moment to reflect on your accomplishments!\n\nBe proud of what you've achieved ✨"
+        );
       }
     }
   } catch (error) {
