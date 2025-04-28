@@ -84,11 +84,21 @@ const getWeekOfMonth = (date: Date): number => {
 };
 
 // Function to create, schedule and manage timer tasks
-const setupScheduledMessages = async (groupChat: GroupChat) => {
+const setupScheduledMessages = async (initialGroupChat: GroupChat) => {
   if (schedulerActive) {
     // Cancel any existing jobs if we're restarting
     Object.values(scheduledJobs).forEach((job) => job.cancel());
     Object.keys(scheduledJobs).forEach((key) => delete scheduledJobs[key]);
+  }
+
+  // Store the target group ID from the initial chat
+  if (!BOT_CONFIG.TARGET_GROUP_ID) {
+    BOT_CONFIG.TARGET_GROUP_ID = initialGroupChat.id._serialized;
+    botStatus.targetGroup = initialGroupChat.id._serialized;
+    botStatus.targetGroupName = initialGroupChat.name;
+    console.log(
+      `Set target group to: ${initialGroupChat.name} (${initialGroupChat.id._serialized})`
+    );
   }
 
   try {
@@ -103,6 +113,11 @@ const setupScheduledMessages = async (groupChat: GroupChat) => {
       try {
         const now = new Date();
         console.log(`Executing Monday 9am task at ${formatDate(now)}`);
+        const groupChat = await client.getChatById(BOT_CONFIG.TARGET_GROUP_ID);
+        if (!groupChat || !groupChat.isGroup) {
+          console.error("Monday task: Target group chat not found or invalid.");
+          return;
+        }
         await groupChat.sendMessage(
           "*Kick off your week with purpose*\n\n👉 What are your main goals this week?\n\nShare below and let's crush this week together! 💪"
         );
@@ -126,6 +141,15 @@ const setupScheduledMessages = async (groupChat: GroupChat) => {
         try {
           const now = new Date();
           console.log(`Executing Friday 3:30pm task at ${formatDate(now)}`);
+          const groupChat = await client.getChatById(
+            BOT_CONFIG.TARGET_GROUP_ID
+          );
+          if (!groupChat || !groupChat.isGroup) {
+            console.error(
+              "Friday task: Target group chat not found or invalid."
+            );
+            return;
+          }
           await groupChat.sendMessage(
             "*Wrap up your week with reflection*\n\n👉 How did you do on your goals this week?\n\nShare your insights and let's celebrate our growth! 🎉"
           );
@@ -151,6 +175,15 @@ const setupScheduledMessages = async (groupChat: GroupChat) => {
               now
             )} (Week ${weekOfMonth} of the month)`
           );
+          const groupChat = await client.getChatById(
+            BOT_CONFIG.TARGET_GROUP_ID
+          );
+          if (!groupChat || !groupChat.isGroup) {
+            console.error(
+              "Bi-weekly task: Target group chat not found or invalid."
+            );
+            return;
+          }
           await groupChat.sendMessage(
             "*Demo day*\n\n👉 Share what you've been cooking up!\n\nThere is no specific format. Could be a short vid, link, screenshot or picture. 🏆"
           );
@@ -171,6 +204,15 @@ const setupScheduledMessages = async (groupChat: GroupChat) => {
         // Only execute on the last day of the month
         if (isLastDayOfMonth(now)) {
           console.log(`Executing month-end task at ${formatDate(now)}`);
+          const groupChat = await client.getChatById(
+            BOT_CONFIG.TARGET_GROUP_ID
+          );
+          if (!groupChat || !groupChat.isGroup) {
+            console.error(
+              "Month-end task: Target group chat not found or invalid."
+            );
+            return;
+          }
           await groupChat.sendMessage(
             "*Monthly Celebration* 🎊\n\nAs we close out the month, take a moment to reflect on your accomplishments!\n\nBe proud of what you've achieved ✨"
           );
