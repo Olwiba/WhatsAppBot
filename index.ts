@@ -19,7 +19,7 @@ const BOT_CONFIG = {
 // Create a new client instance
 const client = new Client({
   authStrategy: new LocalAuth({
-    dataPath: "/home/pptruser/.wwebjs_auth",
+    dataPath: ".wwebjs_auth",
   }),
   puppeteer: {
     headless: true,
