@@ -16,7 +16,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install app dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # Add user so we don't need --no-sandbox
 RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
