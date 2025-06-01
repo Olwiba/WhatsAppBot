@@ -14,8 +14,8 @@ A WhatsApp bot created to post accountability messages, help set goals and much 
 ### Local Development
 
 1. Clone this repository
-2. Install the dependencies with `bun install`
-3. Start the bot with `bun index.ts`
+2. Install the dependencies with `npm install`
+3. Start the bot with `npm start`
 4. Scan the QR code with your WhatsApp to authenticate
 5. Add the bot to your target group chat
 

@@ -1,15 +1,17 @@
 {
   "name": "whatsappbot",
-  "module": "index.ts",
+  "version": "1.0.0",
   "type": "module",
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts"
+  },
   "devDependencies": {
-    "@types/bun": "latest",
     "@types/node": "^22.13.10",
     "@types/node-schedule": "^2.1.7",
-    "@types/qrcode-terminal": "^0.12.2"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
+    "@types/qrcode-terminal": "^0.12.2",
+    "typescript": "^5.0.0",
+    "tsx": "^4.7.0"
   },
   "dependencies": {
     "node-schedule": "^2.1.1",
