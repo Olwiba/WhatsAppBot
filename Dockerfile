@@ -26,11 +26,15 @@ RUN npm ci --omit=dev
 # Add user so we don't need --no-sandbox
 RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
     && mkdir -p /home/pptruser/Downloads \
+    && mkdir -p /app/.wwebjs_auth \
     && chown -R pptruser:pptruser /home/pptruser \
     && chown -R pptruser:pptruser /app
 
 # Copy app source
 COPY . .
+
+# Fix ownership after copying files
+RUN chown -R pptruser:pptruser /app
 
 # Run everything after as non-privileged user
 USER pptruser
