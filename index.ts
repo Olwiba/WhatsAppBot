@@ -286,6 +286,12 @@ client.on("disconnected", (reason: string) => {
 // Message handler
 client.on("message", async (message: Message) => {
   try {
+    // Check if client is ready before processing
+    if (!client.info || !client.info.wid) {
+      console.log("Client not ready, skipping message processing");
+      return;
+    }
+
     if (message.from.endsWith("@g.us")) {
       // This is a group message
       const chat = await message.getChat();
