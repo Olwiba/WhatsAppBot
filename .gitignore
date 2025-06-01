@@ -196,4 +196,3 @@ sessions/
 # Lockfiles
 *.lockb
 *.lock
-package-lock.json
