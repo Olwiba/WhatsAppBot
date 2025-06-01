@@ -1,7 +1,11 @@
 providers = ["node"]
 
+[phases.build]
+cmds = ["npm ci", "npx puppeteer browsers install chrome"]
+
 [start]
 cmd = "npm start"
 
 [variables]
-PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "false" 
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "false"
+PUPPETEER_CACHE_DIR = "/app/.cache/puppeteer" 
