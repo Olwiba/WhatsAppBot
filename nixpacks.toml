@@ -1,18 +1,7 @@
 providers = ["node"]
 
-[phases.setup]
-aptPkgs = ["chromium-browser", "chromium-browser-l10n", "chromium-codecs-ffmpeg"]
-
-[phases.build]
-dependsOn = ["setup"]
-
-[phases.install]
-dependsOn = ["setup"]
-
 [start]
 cmd = "npm start"
 
 [variables]
-NODE_ENV = "production"
-PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
-PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium-browser" 
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "false" 
