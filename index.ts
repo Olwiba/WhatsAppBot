@@ -3,6 +3,14 @@ import type { Message, GroupChat } from "whatsapp-web.js";
 const qrcode = require("qrcode-terminal");
 const { scheduleJob, RecurrenceRule, Range } = require("node-schedule");
 
+// Process management - ensure only one instance runs
+const isRunning = process.env.BOT_INSTANCE_RUNNING;
+if (isRunning) {
+  console.log("Bot instance already running, exiting...");
+  process.exit(0);
+}
+process.env.BOT_INSTANCE_RUNNING = "true";
+
 // Bot configuration
 const BOT_CONFIG = {
   COMMAND_PREFIX: "!bot",
@@ -23,7 +31,7 @@ const isProduction = environment === "production";
 // Create a new client instance
 const client = new Client({
   authStrategy: new LocalAuth({
-    dataPath: "/home/pptruser/.wwebjs_auth",
+    dataPath: "./auth_data",
   }),
   puppeteer: {
     headless: true,
@@ -38,10 +46,12 @@ const client = new Client({
       "--disable-gpu",
       "--disable-web-security",
       "--disable-features=VizDisplayCompositor",
-      "--user-data-dir=/home/pptruser/.chrome-user-data",
       "--disable-extensions",
       "--disable-plugins",
       "--disable-images",
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
     ],
     ...(isProduction && {
       executablePath:
@@ -539,10 +549,50 @@ client.on("message", async (message: Message) => {
 // Error handling
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
+  cleanup();
 });
 
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+// Graceful shutdown handlers
+const cleanup = async () => {
+  console.log("Cleaning up...");
+
+  // Stop connection monitoring
+  stopConnectionMonitoring();
+
+  // Cancel all scheduled jobs
+  Object.values(scheduledJobs).forEach((job) => {
+    if (job) job.cancel();
+  });
+
+  // Destroy client
+  try {
+    if (client) {
+      await client.destroy();
+    }
+  } catch (error) {
+    console.error("Error destroying client:", error);
+  }
+
+  // Clear process flag
+  delete process.env.BOT_INSTANCE_RUNNING;
+
+  console.log("Cleanup completed");
+};
+
+process.on("SIGINT", async () => {
+  console.log("Received SIGINT, shutting down gracefully...");
+  await cleanup();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  console.log("Received SIGTERM, shutting down gracefully...");
+  await cleanup();
+  process.exit(0);
 });
 
 // Initialize the client
