@@ -1,12 +1,16 @@
 FROM node:18-slim
 
-# Install Chrome using direct .deb download (more reliable than repository)
+# Install Chromium and dependencies (more reliable than Google Chrome .deb)
 RUN apt-get update \
-    && apt-get install -y wget ca-certificates fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
-      --no-install-recommends \
-    && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && dpkg -i google-chrome-stable_current_amd64.deb || apt-get -fy install \
-    && rm google-chrome-stable_current_amd64.deb \
+    && apt-get install -y \
+        chromium \
+        fonts-ipafont-gothic \
+        fonts-wqy-zenhei \
+        fonts-thai-tlwg \
+        fonts-kacst \
+        fonts-freefont-ttf \
+        ca-certificates \
+        --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
@@ -32,7 +36,7 @@ COPY . .
 USER pptruser
 
 # Set environment variables
-ENV PUPPETEER_EXECUTABLE_PATH=google-chrome-stable
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 EXPOSE 3000
 
