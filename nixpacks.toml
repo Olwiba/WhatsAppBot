@@ -1,7 +1,12 @@
 providers = ["node"]
 
+[phases.setup]
+aptPkgs = ["chromium"]
+
 [start]
 cmd = "npm start"
 
 [variables]
-PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "false" 
+NODE_ENV = "production"
+CHROMIUM_PATH = "/usr/bin/chromium"
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true" 

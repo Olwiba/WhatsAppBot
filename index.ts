@@ -16,6 +16,10 @@ const BOT_CONFIG = {
   TARGET_GROUP_ID: "", // This will be populated when the bot joins a group
 };
 
+// Environment setup
+const environment = process.env.NODE_ENV;
+const isProduction = environment === "production";
+
 // Create a new client instance
 const client = new Client({
   authStrategy: new LocalAuth({
@@ -35,6 +39,7 @@ const client = new Client({
       "--disable-web-security",
       "--disable-features=VizDisplayCompositor",
     ],
+    ...(isProduction && { executablePath: process.env.CHROMIUM_PATH }),
   },
 });
 
