@@ -289,6 +289,10 @@ client.on("auth_failure", (msg: string) => {
 
 client.on("ready", () => {
   console.log("Client is ready! WhatsApp bot is now active.");
+  console.log(`Client info: ${JSON.stringify(client.info)}`);
+  console.log(`Process memory usage: ${JSON.stringify(process.memoryUsage())}`);
+  console.log(`Node version: ${process.version}`);
+  console.log(`Platform: ${process.platform}`);
   botStartTime = new Date();
 });
 
@@ -300,16 +304,44 @@ client.on("disconnected", (reason: string) => {
 
 // Message handler
 client.on("message", async (message: Message) => {
+  const startTime = Date.now();
+  console.log(
+    `[${new Date().toISOString()}] Received message from: ${message.from}`
+  );
+  console.log(
+    `Client state - info exists: ${!!client.info}, wid exists: ${!!(
+      client.info && client.info.wid
+    )}`
+  );
+
   try {
     if (message.from.endsWith("@g.us")) {
-      // Small delay to let WhatsApp Web sync chat data
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log(`Processing group message, waiting 1s for sync...`);
+
+      console.log(`Getting chat data for: ${message.from}`);
+      const chatStartTime = Date.now();
 
       // This is a group message
       const chat = await message.getChat();
-      const content = message.body.trim();
+      const chatLoadTime = Date.now() - chatStartTime;
 
-      console.log(`Received group message from ${chat.name}: ${content}`);
+      console.log(`Chat loaded successfully in ${chatLoadTime}ms`);
+      console.log(
+        `Chat name: ${chat.name}, isGroup: ${chat.isGroup}, participants: ${
+          chat.isGroup
+            ? (chat as GroupChat).participants?.length || "N/A"
+            : "N/A (not a group)"
+        }`
+      );
+
+      const content = message.body.trim();
+      const totalTime = Date.now() - startTime;
+
+      console.log(
+        `[${new Date().toISOString()}] Processed group message from ${
+          chat.name
+        } in ${totalTime}ms: ${content}`
+      );
 
       // Save this group as our target if not already set
       if (!BOT_CONFIG.TARGET_GROUP_ID) {
@@ -407,7 +439,33 @@ client.on("message", async (message: Message) => {
       }
     }
   } catch (error) {
-    console.error("Error handling message:", error);
+    const totalTime = Date.now() - startTime;
+    console.error(
+      `[${new Date().toISOString()}] Error handling message after ${totalTime}ms:`,
+      error
+    );
+
+    if (error instanceof Error) {
+      console.error(
+        `Error details - message: ${error.message}, stack: ${error.stack}`
+      );
+    } else {
+      console.error(`Error details - ${JSON.stringify(error)}`);
+    }
+
+    console.error(
+      `Client state at error - info exists: ${!!client.info}, wid exists: ${!!(
+        client.info && client.info.wid
+      )}`
+    );
+    console.error(
+      `Message details - from: ${message.from}, body: ${
+        message.body
+      }, hasQuotedMsg: ${!!message.hasQuotedMsg}`
+    );
+    console.error(
+      `Memory usage at error: ${JSON.stringify(process.memoryUsage())}`
+    );
   }
 });
 
