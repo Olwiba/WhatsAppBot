@@ -2,6 +2,7 @@ const { Client, LocalAuth } = require("whatsapp-web.js");
 import type { Message, GroupChat } from "whatsapp-web.js";
 const qrcode = require("qrcode-terminal");
 const { scheduleJob, RecurrenceRule, Range } = require("node-schedule");
+const puppeteer = require("puppeteer");
 
 // Bot configuration
 const BOT_CONFIG = {
@@ -23,6 +24,8 @@ const client = new Client({
   }),
   puppeteer: {
     headless: true,
+    executablePath:
+      process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
@@ -32,6 +35,8 @@ const client = new Client({
       "--no-zygote",
       "--single-process",
       "--disable-gpu",
+      "--disable-web-security",
+      "--disable-features=VizDisplayCompositor",
     ],
   },
 });

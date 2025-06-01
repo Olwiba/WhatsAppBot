@@ -1,12 +1,18 @@
 providers = ["node"]
 
 [phases.setup]
-aptPkgs = ["wget", "gnupg", "ca-certificates", "procps", "libxss1", "libgconf-2-4", "libxrandr2", "libasound2", "libpangocairo-1.0-0", "libatk1.0-0", "libcairo-gobject2", "libgtk-3-0", "libgdk-pixbuf2.0-0", "libxcomposite1", "libxcursor1", "libxdamage1", "libxi6", "libxtst6", "libnss3", "libcups2", "libdrm2", "libxkbcommon0", "libatspi2.0-0"]
+aptPkgs = ["chromium", "chromium-sandbox"]
+
+[phases.build]
+dependsOn = ["setup"]
+
+[phases.install]
+dependsOn = ["setup"]
 
 [start]
 cmd = "npm start"
 
 [variables]
 NODE_ENV = "production"
-PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "false"
-PUPPETEER_CACHE_DIR = "/app/.cache/puppeteer" 
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+PUPPETEER_EXECUTABLE_PATH = "/usr/bin/chromium" 
