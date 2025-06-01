@@ -16,6 +16,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install app dependencies
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 RUN npm ci --omit=dev
 
 # Add user so we don't need --no-sandbox
@@ -31,7 +32,6 @@ COPY . .
 USER pptruser
 
 # Set environment variables
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=google-chrome-stable
 
 EXPOSE 3000
