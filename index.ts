@@ -321,8 +321,8 @@ client.on("message", async (message: Message) => {
       console.log(`Getting chat data for: ${message.from}`);
       const chatStartTime = Date.now();
 
-      // This is a group message
-      const chat = await message.getChat();
+      // Use client.getChatById instead of message.getChat() for better reliability
+      const chat = await client.getChatById(message.from);
       const chatLoadTime = Date.now() - chatStartTime;
 
       console.log(`Chat loaded successfully in ${chatLoadTime}ms`);
