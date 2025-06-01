@@ -23,7 +23,7 @@ const isProduction = environment === "production";
 // Create a new client instance
 const client = new Client({
   authStrategy: new LocalAuth({
-    dataPath: ".wwebjs_auth",
+    dataPath: "/home/pptruser/.wwebjs_auth",
   }),
   puppeteer: {
     headless: true,
@@ -38,10 +38,14 @@ const client = new Client({
       "--disable-gpu",
       "--disable-web-security",
       "--disable-features=VizDisplayCompositor",
+      "--user-data-dir=/home/pptruser/.chrome-user-data",
+      "--disable-extensions",
+      "--disable-plugins",
+      "--disable-images",
     ],
     ...(isProduction && {
       executablePath:
-        process.env.PUPPETEER_EXECUTABLE_PATH || "google-chrome-stable",
+        process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium",
     }),
   },
 });

@@ -26,7 +26,8 @@ RUN npm ci --omit=dev
 # Add user so we don't need --no-sandbox
 RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
     && mkdir -p /home/pptruser/Downloads \
-    && mkdir -p /app/.wwebjs_auth \
+    && mkdir -p /home/pptruser/.wwebjs_auth \
+    && mkdir -p /home/pptruser/.chrome-user-data \
     && chown -R pptruser:pptruser /home/pptruser \
     && chown -R pptruser:pptruser /app
 
