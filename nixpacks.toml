@@ -1,12 +1,13 @@
 providers = ["node"]
 
 [phases.setup]
-aptPkgs = ["chromium"]
+aptPkgs = ["wget", "fonts-liberation", "libasound2", "libatk1.0-0", "libcairo2", "libcups2", "libfontconfig1", "libgdk-pixbuf2.0-0", "libgtk-3-0", "libnspr4", "libpango-1.0-0", "libxss1", "libappindicator1", "libnss3", "lsb-release", "xdg-utils"]
+cmds = ["wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb", "dpkg -i google-chrome-stable_current_amd64.deb || apt-get -fy install"]
 
 [start]
 cmd = "npm start"
 
 [variables]
 NODE_ENV = "production"
-CHROMIUM_PATH = "/usr/bin/chromium"
+CHROMIUM_PATH = "/usr/bin/google-chrome"
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true" 
