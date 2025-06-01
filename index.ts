@@ -39,7 +39,10 @@ const client = new Client({
       "--disable-web-security",
       "--disable-features=VizDisplayCompositor",
     ],
-    ...(isProduction && { executablePath: process.env.CHROMIUM_PATH }),
+    ...(isProduction && {
+      executablePath:
+        process.env.PUPPETEER_EXECUTABLE_PATH || "google-chrome-stable",
+    }),
   },
 });
 
