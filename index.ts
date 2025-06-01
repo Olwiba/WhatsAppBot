@@ -416,10 +416,25 @@ client.on("message", async (message: Message) => {
   try {
     if (message.from.endsWith("@g.us")) {
       // This is a group message
-      const chat = await message.getChat();
       const content = message.body.trim();
 
-      console.log(`Received group message from ${chat.name}: ${content}`);
+      console.log(`Received group message from ${message.from}: ${content}`);
+
+      // Try to get the chat with error handling
+      let chat;
+      try {
+        chat = await message.getChat();
+      } catch (error) {
+        console.error("Error getting chat from message:", error);
+        return; // Skip processing this message
+      }
+
+      if (!chat || !chat.isGroup) {
+        console.log("Message is not from a group chat, skipping");
+        return;
+      }
+
+      console.log(`Processing message from group: ${chat.name}`);
 
       // Save this group as our target if not already set
       if (!BOT_CONFIG.TARGET_GROUP_ID) {
