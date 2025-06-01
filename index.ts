@@ -1,7 +1,7 @@
-import { Client, LocalAuth } from "whatsapp-web.js";
+const { Client, LocalAuth } = require("whatsapp-web.js");
 import type { Message, GroupChat } from "whatsapp-web.js";
-import qrcode from "qrcode-terminal";
-import { scheduleJob, RecurrenceRule, Range } from "node-schedule";
+const qrcode = require("qrcode-terminal");
+const { scheduleJob, RecurrenceRule, Range } = require("node-schedule");
 
 // Bot configuration
 const BOT_CONFIG = {

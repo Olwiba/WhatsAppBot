@@ -192,3 +192,8 @@ sessions/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
+
+# Lockfiles
+*.lockb
+*.lock
+package-lock.json
