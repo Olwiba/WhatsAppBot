@@ -1,5 +1,4 @@
-[providers]
-bun = "1.1.29"
+providers = ["bun"]
 
 [phases.build]
 dependsOn = ["install"]
