@@ -41,6 +41,44 @@ let schedulerActive = false;
 const scheduledJobs: Record<string, any> = {};
 let botStartTime: Date | null = null;
 
+// Auto-reconnection configuration
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_DELAY = 30000; // 30 seconds
+
+// Connection monitoring
+let connectionCheckInterval: ReturnType<typeof setInterval> | null = null;
+const CONNECTION_CHECK_INTERVAL = 300000; // 5 minutes
+
+// Function to attempt reconnection
+const attemptReconnection = async () => {
+  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    console.error(
+      `Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Manual restart required.`
+    );
+    return;
+  }
+
+  reconnectAttempts++;
+  console.log(
+    `Attempting to reconnect... (Attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`
+  );
+
+  setTimeout(async () => {
+    try {
+      await client.destroy();
+      console.log("Previous client instance destroyed");
+
+      // Reinitialize the client
+      console.log("Reinitializing WhatsApp client...");
+      await client.initialize();
+    } catch (error) {
+      console.error("Error during reconnection:", error);
+      attemptReconnection(); // Try again
+    }
+  }, RECONNECT_DELAY);
+};
+
 // Initialize bot status
 const botStatus = {
   isActive: false,
@@ -83,6 +121,32 @@ const getWeekOfMonth = (date: Date): number => {
   return Math.ceil((date.getDate() + dayOfWeek) / 7);
 };
 
+// Helper function to check if client is ready
+const isClientReady = (): boolean => {
+  return client.info && client.info.wid !== undefined;
+};
+
+// Helper function to safely get chat with connection checks
+const safelyGetChat = async (chatId: string): Promise<GroupChat | null> => {
+  try {
+    if (!isClientReady()) {
+      console.error("Client is not ready or disconnected");
+      return null;
+    }
+
+    const chat = await client.getChatById(chatId);
+    if (!chat || !chat.isGroup) {
+      console.error("Target group chat not found or not a group");
+      return null;
+    }
+
+    return chat as GroupChat;
+  } catch (error) {
+    console.error("Error getting chat:", error);
+    return null;
+  }
+};
+
 // Function to create, schedule and manage timer tasks
 const setupScheduledMessages = async (initialGroupChat: GroupChat) => {
   if (schedulerActive) {
@@ -113,11 +177,13 @@ const setupScheduledMessages = async (initialGroupChat: GroupChat) => {
       try {
         const now = new Date();
         console.log(`Executing Monday 9am task at ${formatDate(now)}`);
-        const groupChat = await client.getChatById(BOT_CONFIG.TARGET_GROUP_ID);
-        if (!groupChat || !groupChat.isGroup) {
-          console.error("Monday task: Target group chat not found or invalid.");
+
+        const groupChat = await safelyGetChat(BOT_CONFIG.TARGET_GROUP_ID);
+        if (!groupChat) {
+          console.error("Monday task: Unable to get target group chat");
           return;
         }
+
         await groupChat.sendMessage(
           "*Kick off your week with purpose*\n\n👉 What are your main goals this week?\n\nShare below and let's crush this week together! 💪"
         );
@@ -141,15 +207,13 @@ const setupScheduledMessages = async (initialGroupChat: GroupChat) => {
         try {
           const now = new Date();
           console.log(`Executing Friday 3:30pm task at ${formatDate(now)}`);
-          const groupChat = await client.getChatById(
-            BOT_CONFIG.TARGET_GROUP_ID
-          );
-          if (!groupChat || !groupChat.isGroup) {
-            console.error(
-              "Friday task: Target group chat not found or invalid."
-            );
+
+          const groupChat = await safelyGetChat(BOT_CONFIG.TARGET_GROUP_ID);
+          if (!groupChat) {
+            console.error("Friday task: Unable to get target group chat");
             return;
           }
+
           await groupChat.sendMessage(
             "*Wrap up your week with reflection*\n\n👉 How did you do on your goals this week?\n\nShare your insights and let's celebrate our growth! 🎉"
           );
@@ -175,15 +239,13 @@ const setupScheduledMessages = async (initialGroupChat: GroupChat) => {
               now
             )} (Week ${weekOfMonth} of the month)`
           );
-          const groupChat = await client.getChatById(
-            BOT_CONFIG.TARGET_GROUP_ID
-          );
-          if (!groupChat || !groupChat.isGroup) {
-            console.error(
-              "Bi-weekly task: Target group chat not found or invalid."
-            );
+
+          const groupChat = await safelyGetChat(BOT_CONFIG.TARGET_GROUP_ID);
+          if (!groupChat) {
+            console.error("Bi-weekly task: Unable to get target group chat");
             return;
           }
+
           await groupChat.sendMessage(
             "*Demo day*\n\n👉 Share what you've been cooking up!\n\nThere is no specific format. Could be a short vid, link, screenshot or picture. 🏆"
           );
@@ -204,15 +266,13 @@ const setupScheduledMessages = async (initialGroupChat: GroupChat) => {
         // Only execute on the last day of the month
         if (isLastDayOfMonth(now)) {
           console.log(`Executing month-end task at ${formatDate(now)}`);
-          const groupChat = await client.getChatById(
-            BOT_CONFIG.TARGET_GROUP_ID
-          );
-          if (!groupChat || !groupChat.isGroup) {
-            console.error(
-              "Month-end task: Target group chat not found or invalid."
-            );
+
+          const groupChat = await safelyGetChat(BOT_CONFIG.TARGET_GROUP_ID);
+          if (!groupChat) {
+            console.error("Month-end task: Unable to get target group chat");
             return;
           }
+
           await groupChat.sendMessage(
             "*Monthly Celebration* 🎊\n\nAs we close out the month, take a moment to reflect on your accomplishments!\n\nBe proud of what you've achieved ✨"
           );
@@ -272,15 +332,69 @@ client.on("auth_failure", (msg: string) => {
   console.error("Authentication failed:", msg);
 });
 
+// Function to start connection monitoring
+const startConnectionMonitoring = () => {
+  if (connectionCheckInterval) {
+    clearInterval(connectionCheckInterval);
+  }
+
+  connectionCheckInterval = setInterval(async () => {
+    try {
+      if (!isClientReady()) {
+        console.warn("Connection check failed: Client not ready");
+        return;
+      }
+
+      // Try to get client info as a health check
+      const info = client.info;
+      if (!info || !info.wid) {
+        console.warn("Connection check failed: No client info available");
+        return;
+      }
+
+      console.log("Connection health check passed");
+    } catch (error) {
+      console.error("Connection health check error:", error);
+    }
+  }, CONNECTION_CHECK_INTERVAL);
+
+  console.log("Connection monitoring started");
+};
+
+// Function to stop connection monitoring
+const stopConnectionMonitoring = () => {
+  if (connectionCheckInterval) {
+    clearInterval(connectionCheckInterval);
+    connectionCheckInterval = null;
+    console.log("Connection monitoring stopped");
+  }
+};
+
 client.on("ready", () => {
   console.log("Client is ready! WhatsApp bot is now active.");
   botStartTime = new Date();
+  reconnectAttempts = 0; // Reset reconnection attempts on successful connection
+  startConnectionMonitoring(); // Start monitoring connection health
 });
 
 client.on("disconnected", (reason: string) => {
   console.log("Client disconnected:", reason);
   schedulerActive = false;
   botStatus.isActive = false;
+
+  stopConnectionMonitoring(); // Stop monitoring when disconnected
+
+  // Cancel all scheduled jobs when disconnected
+  Object.values(scheduledJobs).forEach((job) => {
+    if (job) job.cancel();
+  });
+  Object.keys(scheduledJobs).forEach((key) => delete scheduledJobs[key]);
+
+  console.log("All scheduled jobs cancelled due to disconnection");
+
+  // Attempt to reconnect
+  console.log("Scheduling reconnection attempt...");
+  attemptReconnection();
 });
 
 // Message handler

@@ -11,11 +11,28 @@ A WhatsApp bot created to post accountability messages, help set goals and much 
 
 ## Getting started 🚀
 
+### Local Development
+
 1. Clone this repository
 2. Install the dependencies with `bun install`
 3. Start the bot with `bun index.ts`
 4. Scan the QR code with your WhatsApp to authenticate
 5. Add the bot to your target group chat
+
+### Deployment on Coolify 🚀
+
+1. Push your code to a Git repository
+2. In Coolify, create a new application from your Git repository
+3. **Important**: Add a persistent volume mount:
+   - Source: `/app/.wwebjs_auth`
+   - Destination: Choose a persistent storage location
+   - This preserves your WhatsApp session between deployments
+4. Deploy the application
+5. Check the logs for the QR code on first deployment
+6. Scan the QR code with WhatsApp mobile app
+7. Add the bot to your target group chat and run `!bot start`
+
+**Note**: The nixpacks.toml file is already configured with all necessary dependencies for Puppeteer/Chrome to run in the container.
 
 ## Commands 📝
 
@@ -26,8 +43,9 @@ A WhatsApp bot created to post accountability messages, help set goals and much 
 ## Additional information ℹ️
 
 - This bot uses WhatsApp Web.js and requires a persistent session
-- Run this on your server with pm2 or any other process manager
+- The bot automatically reconnects if the WhatsApp session drops
 - The bot is configured for New Zealand Time (NZT)
+- Session data is stored in `.wwebjs_auth/` directory (must be persistent in production)
 
 ## Contributing 🤝
 
