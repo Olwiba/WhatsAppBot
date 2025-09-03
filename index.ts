@@ -7,6 +7,7 @@ const { scheduleJob, RecurrenceRule, Range } = require("node-schedule");
 const BOT_CONFIG = {
   COMMAND_PREFIX: "!bot",
   START_COMMAND: "!bot start",
+  STOP_COMMAND: "!bot stop",
   STATUS_COMMAND: "!bot status",
   HELP_COMMAND: "!bot help",
   MONDAY_COMMAND: "!bot monday",
@@ -337,13 +338,20 @@ client.on("disconnected", (reason: string) => {
 // Message handler
 client.on("message", async (message: Message) => {
   try {
-    if (message.from.endsWith("@g.us")) {
-      // This is a group message
-      const chat = await message.getChat();
-      const content = message.body.trim();
+    const chat = await message.getChat();
+    const content = message.body.trim();
+    const isGroupMessage = message.from.endsWith("@g.us");
+    const isDirectMessage = !isGroupMessage;
+    
+    // Log message reception with timestamp
+    const timestamp = new Date().toISOString();
+    if (isGroupMessage) {
+      console.log(`[${timestamp}] Received group message from ${chat.name}`);
+    } else {
+      console.log(`[${timestamp}] Received direct message`);
+    }
 
-      console.log(`Received group message from ${chat.name}: ${content}`);
-
+    if (isGroupMessage) {
       // Save this group as our target if not already set
       if (!BOT_CONFIG.TARGET_GROUP_ID) {
         BOT_CONFIG.TARGET_GROUP_ID = message.from;
@@ -352,17 +360,43 @@ client.on("message", async (message: Message) => {
         console.log(`Set target group to: ${chat.name} (${message.from})`);
       }
 
-      // Handle commands
+      // Handle group commands
       if (content === BOT_CONFIG.START_COMMAND) {
-        const success = await setupScheduledMessages(chat as GroupChat);
-        if (success) {
+        if (schedulerActive) {
           await chat.sendMessage(
-            "📆 Scheduled message service started! I will now post regular updates according to the schedule."
+            "🤖 I'm already running! The scheduled message service is active."
           );
         } else {
+          const success = await setupScheduledMessages(chat as GroupChat);
+          if (success) {
+            await chat.sendMessage(
+              "📆 Scheduled message service started! I will now post regular updates according to the schedule."
+            );
+          } else {
+            await chat.sendMessage(
+              "❌ Failed to start scheduled message service. Please check server logs."
+            );
+          }
+        }
+      } else if (content === BOT_CONFIG.STOP_COMMAND) {
+        if (!schedulerActive) {
           await chat.sendMessage(
-            "❌ Failed to start scheduled message service. Please check server logs."
+            "🤖 I'm not currently running any scheduled messages."
           );
+        } else {
+          // Cancel all scheduled jobs
+          Object.values(scheduledJobs).forEach((job) => job.cancel());
+          Object.keys(scheduledJobs).forEach((key) => delete scheduledJobs[key]);
+          
+          schedulerActive = false;
+          botStatus.isActive = false;
+          botStatus.scheduledTasksCount = 0;
+          botStatus.nextScheduledTasks = [];
+          
+          await chat.sendMessage(
+            "🛑 Scheduled message service stopped. All scheduled messages have been cancelled."
+          );
+          console.log("[" + new Date().toISOString() + "] Scheduled message service stopped by user command");
         }
       } else if (content === BOT_CONFIG.STATUS_COMMAND) {
         // Send diagnostic information
@@ -391,6 +425,8 @@ client.on("message", async (message: Message) => {
           `Shows the current bot status and upcoming scheduled messages.\n\n` +
           `🛟 *${BOT_CONFIG.HELP_COMMAND}*\n` +
           `Displays this help message.\n\n` +
+          `🛑 *${BOT_CONFIG.STOP_COMMAND}*\n` +
+          `Stops the scheduled messaging service.\n\n` +
           `📅 *${BOT_CONFIG.MONDAY_COMMAND}*\n` +
           `Triggers the Monday message manually.\n\n` +
           `📅 *${BOT_CONFIG.FRIDAY_COMMAND}*\n` +
@@ -398,7 +434,8 @@ client.on("message", async (message: Message) => {
           `📅 *${BOT_CONFIG.DEMO_COMMAND}*\n` +
           `Triggers the biweekly demo day message manually.\n\n` +
           `📅 *${BOT_CONFIG.MONTHLY_COMMAND}*\n` +
-          `Triggers the monthly celebration message manually.`;
+          `Triggers the monthly celebration message manually.\n\n` +
+          `*Note:* You can also DM me *${BOT_CONFIG.STATUS_COMMAND}* for a private status update.`;
 
         await chat.sendMessage(helpText);
       } else if (content === BOT_CONFIG.MONDAY_COMMAND) {
@@ -437,6 +474,35 @@ client.on("message", async (message: Message) => {
         await chat.sendMessage(
           "*Monthly Celebration* 🎊\n\nAs we close out the month, take a moment to reflect on your accomplishments!\n\nBe proud of what you've achieved ✨"
         );
+      }
+    } else if (isDirectMessage) {
+      // Handle direct message commands (admin only)
+      if (content === BOT_CONFIG.STATUS_COMMAND) {
+        const status =
+          `*Bot Status Report*\n\n` +
+          `🤖 Active: ${botStatus.isActive ? "Yes ✅" : "No ❌"}\n` +
+          `⏱️ Uptime: ${botStatus.uptime()}\n` +
+          `👥 Target Group: ${botStatus.targetGroupName || "Not set"}\n` +
+          `📊 Scheduled Tasks: ${botStatus.scheduledTasksCount}\n\n` +
+          `*Upcoming Messages:*\n${botStatus.nextScheduledTasks.length
+            ? botStatus.nextScheduledTasks
+                .map((task) => `- ${task}`)
+                .join("\n")
+            : "No upcoming messages scheduled."
+          }`;
+
+        await chat.sendMessage(status);
+        console.log(`[${new Date().toISOString()}] Sent status report via direct message`);
+      } else if (content === BOT_CONFIG.HELP_COMMAND) {
+        const helpText =
+          `*Admin Commands (Direct Message)*\n\n` +
+          `📊 *${BOT_CONFIG.STATUS_COMMAND}*\n` +
+          `Shows the current bot status and upcoming scheduled messages.\n\n` +
+          `🛟 *${BOT_CONFIG.HELP_COMMAND}*\n` +
+          `Displays this help message.\n\n` +
+          `*Note:* Start/stop commands must be used in the target group chat.`;
+
+        await chat.sendMessage(helpText);
       }
     }
   } catch (error) {
